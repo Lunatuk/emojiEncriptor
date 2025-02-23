@@ -1,12 +1,10 @@
 #!/bin/bash
-
 if ! command -v xxd &> /dev/null; then
     echo "Ошибка: xxd не найден. Установите vim с помощью 'sudo apt install vim' или 'sudo yum install vim'."
     echo "Error: xxd not found. Install vim using 'sudo apt install vim' or 'sudo yum install vim'."
     exit 1
 fi
 
-# Диапазоны variation selectors
 VARIATION_SELECTOR_START=65024      # 0xFE00 
 VARIATION_SELECTOR_END=65039        # 0xFE0F
 VARIATION_SELECTOR_SUPPLEMENT_START=917760  # 0xE0100
@@ -20,7 +18,6 @@ to_variation_selector() {
         printf "\\U$(printf '%08x' $((VARIATION_SELECTOR_SUPPLEMENT_START + byte - 16)))"
     else
         echo "Ошибка: байт $byte вне диапазона 0-255" >&2
-        echo "Error: byte $byte is out of range 0-255" >&2
         exit 1
     fi
 }
@@ -37,42 +34,55 @@ from_variation_selector() {
 }
 
 encode() {
-    local emoji="$1"
+    local base="$1"
     local text="$2"
-    local encoded="$emoji"
-
+    local encoded="$base"
     local bytes
     bytes=$(echo -n "$text" | xxd -p | tr -d '\n' | fold -w2)
-    
     for byte_hex in $bytes; do
         byte_dec=$((16#$byte_hex))
         encoded+=$(to_variation_selector "$byte_dec")
     done
-    
     echo -e "$encoded"
 }
 
 decode() {
     local text="$1"
-    local bytes=()
+    local messages=()
+    local current_bytes=()
+    local in_block=false       
 
     while IFS= read -r -N1 char; do
         codepoint=$(printf '%d' "'$char")
         byte=$(from_variation_selector "$codepoint")
         if [[ $? -eq 0 ]]; then
-            bytes+=("$byte")
-        elif [[ ${#bytes[@]} -eq 0 ]]; then
-            continue
+            current_bytes+=("$byte")
+            in_block=true
         else
-            break
+            if $in_block && [ ${#current_bytes[@]} -gt 0 ]; then
+                local byte_string=""
+                for byte in "${current_bytes[@]}"; do
+                    byte_string+=$(printf '\\x%x' "$byte")
+                done
+                messages+=("$(echo -e "$byte_string")")
+                current_bytes=()
+                in_block=false
+            fi
         fi
     done < <(printf %s "$text")
 
-    local byte_string=""
-    for byte in "${bytes[@]}"; do
-        byte_string+=$(printf '\\x%x' "$byte")
+    if [ ${#current_bytes[@]} -gt 0 ]; then
+        local byte_string=""
+        for byte in "${current_bytes[@]}"; do
+            byte_string+=$(printf '\\x%x' "$byte")
+        done
+        messages+=("$(echo -e "$byte_string")")
+    fi
+
+    for msg in "${messages[@]}"; do
+        echo -n "$msg "
     done
-    echo -e "$byte_string"
+    echo
 }
 
 echo "Выбери язык/Choose your language:"
@@ -80,6 +90,7 @@ echo "Русский - '1'"
 echo "English - '2'"
 read -p "Твой выбор/Your choice: " lang_choice
 
+#I only use case because I've never used it in bash scripts and I was wondering how it works here
 case "$lang_choice" in
     1)
         echo "Выберите режим:"
@@ -89,14 +100,14 @@ case "$lang_choice" in
         case "$choice" in
             1)
                 echo "😀😃😄😁😆😅😂🤣☺😊😇🙂🙃😉😌😍😘😗😙😚😋😛😝😜🤪🤨🧐🤓😎🤩😏😒😞😔😟😕🙁☹️😣😖😫😩😢😭😤😠😡🤬🤯😳😱😨😰😥😓🤗🤔🤭🤫🤥😶😐😑😬🙄😯😦😧😮😲😴🤤😪😵🤐🤢🤮🤧😷🤒🤕🤑🤠😈👍👎"
-                read -p "Выбери смайлик для кодирования (скопируй и вставь): " emoji
-                read -p "Теперь введи свое сообщение для кодирования: " input_text
-                encoded=$(encode "$emoji" "$input_text")
+                read -p "Введи один символ для кодирования (смайлик или буква): " base
+                read -p "Введи сообщение для кодирования: " msg
+                encoded=$(encode "$base" "$msg")
                 echo "Закодировано: $encoded"
                 ;;
             2)
-                read -p "Введите закодированную строку: " encoded_text
-                decoded=$(decode "$encoded_text")
+                read -p "Введи зашифрованное сообщение (в нём может быть несколько блоков): " encoded_input
+                decoded=$(decode "$encoded_input")
                 echo "Декодировано: $decoded"
                 ;;
             *)
@@ -113,14 +124,14 @@ case "$lang_choice" in
         case "$choice" in
             1)
                 echo "😀😃😄😁😆😅😂🤣☺😊😇🙂🙃😉😌😍😘😗😙😚😋😛😝😜🤪🤨🧐🤓😎🤩😏😒😞😔😟😕🙁☹️😣😖😫😩😢😭😤😠😡🤬🤯😳😱😨😰😥😓🤗🤔🤭🤫🤥😶😐😑😬🙄😯😦😧😮😲😴🤤😪😵🤐🤢🤮🤧😷🤒🤕🤑🤠😈👍👎"
-                read -p "Choose an emoji for encoding (copy and paste): " emoji
-                read -p "Now enter your message for encoding: " input_text
-                encoded=$(encode "$emoji" "$input_text")
+                read -p "Enter a single symbol for encoding (emoji or letter): " base
+                read -p "Enter your message for encoding: " msg
+                encoded=$(encode "$base" "$msg")
                 echo "Encoded: $encoded"
                 ;;
             2)
-                read -p "Enter the encoded string: " encoded_text
-                decoded=$(decode "$encoded_text")
+                read -p "Enter the encoded message (it may contain several blocks): " encoded_input
+                decoded=$(decode "$encoded_input")
                 echo "Decoded: $decoded"
                 ;;
             *)
