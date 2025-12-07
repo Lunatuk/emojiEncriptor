@@ -297,27 +297,3 @@ func main() {
 		log.Fatal(err)
 	}
 }
-
-// func main() {
-// 	reader := bufio.NewReader(os.Stdin)
-
-// 	fmt.Println("Выбери язык/Choose your language:")
-// 	fmt.Println("Русский - '1'")
-// 	fmt.Println("English - '2'")
-
-// 	langChoice, err := prompt(reader, "Твой выбор/Your choice: ")
-// 	if err != nil {
-// 		fmt.Println("Input error:", err)
-// 		os.Exit(1)
-// 	}
-
-// 	switch langChoice {
-// 	case "1":
-// 		runRussian(reader)
-// 	case "2":
-// 		runEnglish(reader)
-// 	default:
-// 		fmt.Println("Неверный выбор языка. Please choose 1 or 2.")
-// 		os.Exit(1)
-// 	}
-// }
