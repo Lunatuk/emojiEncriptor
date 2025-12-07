@@ -16,9 +16,9 @@ pipeline {
             }
         }
 
-        stage('Publish to Web Server') {
+        stage('Deploy app container') {
             steps {
-                sh 'cp build/emojiEncriptor /var/www/emojiEncriptor/'
+                sh 'docker-compose -f docker-compose.yml up -d --build app'
             }
         }
     }

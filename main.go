@@ -4,10 +4,51 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
+	"log"
+	"net/http"
 	"os"
 	"strings"
 )
+
+var pageTpl = template.Must(template.New("index").Parse(`
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>emojiEncriptor</title>
+</head>
+<body>
+    <h1>emojiEncriptor</h1>
+    <form method="POST" action="/process">
+        <label>
+            Base symbol (emoji or letter):
+            <input type="text" name="base" value="{{.Base}}" maxlength="4">
+        </label>
+        <br><br>
+        <textarea name="text" rows="5" cols="40">{{.Input}}</textarea><br><br>
+        <label>
+            <input type="radio" name="mode" value="encode" {{if eq .Mode "encode"}}checked{{end}}> Encode
+        </label>
+        <label>
+            <input type="radio" name="mode" value="decode" {{if eq .Mode "decode"}}checked{{end}}> Decode
+        </label>
+        <br><br>
+        <button type="submit">Run</button>
+    </form>
+
+    {{if .Error}}
+    <p style="color: red">{{.Error}}</p>
+    {{end}}
+
+    {{if .Output}}
+    <h2>Result:</h2>
+    <pre>{{.Output}}</pre>
+    {{end}}
+</body>
+</html>
+`))
 
 const (
 	variationSelectorStart           rune = 0xFE00
@@ -188,26 +229,95 @@ func runEnglish(reader *bufio.Reader) {
 	}
 }
 
-func main() {
-	reader := bufio.NewReader(os.Stdin)
+type pageData struct {
+	Input  string
+	Output string
+	Mode   string
+	Base   string
+	Error  string
+}
 
-	fmt.Println("Выбери язык/Choose your language:")
-	fmt.Println("Русский - '1'")
-	fmt.Println("English - '2'")
-
-	langChoice, err := prompt(reader, "Твой выбор/Your choice: ")
-	if err != nil {
-		fmt.Println("Input error:", err)
-		os.Exit(1)
-	}
-
-	switch langChoice {
-	case "1":
-		runRussian(reader)
-	case "2":
-		runEnglish(reader)
-	default:
-		fmt.Println("Неверный выбор языка. Please choose 1 or 2.")
-		os.Exit(1)
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	data := pageData{Mode: "encode"}
+	if err := pageTpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
+
+func processHandler(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+
+	text := r.Form.Get("text")
+	mode := r.Form.Get("mode")
+	base := r.Form.Get("base")
+	if mode == "" {
+		mode = "encode"
+	}
+
+	var (
+		result string
+		errMsg string
+	)
+
+	switch mode {
+	case "encode":
+		encoded, err := encode(base, text)
+		if err != nil {
+			errMsg = err.Error()
+		} else {
+			result = encoded
+		}
+	default:
+		decoded := decode(text)
+		result = strings.Join(decoded, " ")
+	}
+
+	data := pageData{
+		Input:  text,
+		Output: result,
+		Mode:   mode,
+		Base:   base,
+		Error:  errMsg,
+	}
+
+	if err := pageTpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func main() {
+	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/process", processHandler)
+
+	log.Println("Server listening on :8080")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// func main() {
+// 	reader := bufio.NewReader(os.Stdin)
+
+// 	fmt.Println("Выбери язык/Choose your language:")
+// 	fmt.Println("Русский - '1'")
+// 	fmt.Println("English - '2'")
+
+// 	langChoice, err := prompt(reader, "Твой выбор/Your choice: ")
+// 	if err != nil {
+// 		fmt.Println("Input error:", err)
+// 		os.Exit(1)
+// 	}
+
+// 	switch langChoice {
+// 	case "1":
+// 		runRussian(reader)
+// 	case "2":
+// 		runEnglish(reader)
+// 	default:
+// 		fmt.Println("Неверный выбор языка. Please choose 1 or 2.")
+// 		os.Exit(1)
+// 	}
+// }

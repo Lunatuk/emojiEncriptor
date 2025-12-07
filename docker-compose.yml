@@ -10,16 +10,14 @@ services:
       - "50000:50000"
     volumes:
       - jenkins_home:/var/jenkins_home
-      - ./web:/var/www/emojiEncriptor
+      - /var/run/docker.sock:/var/run/docker.sock
 
-  web:
-    image: nginx:alpine
-    container_name: emoji-web
+  app:
+    build:
+      context: .
+    container_name: emoji-app
     ports:
-      - "8080:80"
-    volumes:
-      - ./web:/usr/share/nginx/html:ro
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - "8080:8080"
 
 volumes:
   jenkins_home:
