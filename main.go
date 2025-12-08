@@ -1,15 +1,11 @@
 package main
 
 import (
-	// "bufio"
 	"errors"
-	// "fmt"
 	"html/template"
-	// "io"
 	"log"
 	"net/http"
 
-	// "os"
 	"strings"
 )
 
