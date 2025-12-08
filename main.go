@@ -1,14 +1,15 @@
 package main
 
 import (
-	"bufio"
+	// "bufio"
 	"errors"
-	"fmt"
+	// "fmt"
 	"html/template"
-	"io"
+	// "io"
 	"log"
 	"net/http"
-	"os"
+
+	// "os"
 	"strings"
 )
 
@@ -118,116 +119,116 @@ func decode(text string) []string {
 	return messages
 }
 
-func prompt(reader *bufio.Reader, message string) (string, error) {
-	fmt.Print(message)
-	input, err := reader.ReadString('\n')
-	if errors.Is(err, io.EOF) {
-		return strings.TrimSpace(input), nil
-	}
-	if err != nil {
-		return "", err
-	}
+// func prompt(reader *bufio.Reader, message string) (string, error) {
+// 	fmt.Print(message)
+// 	input, err := reader.ReadString('\n')
+// 	if errors.Is(err, io.EOF) {
+// 		return strings.TrimSpace(input), nil
+// 	}
+// 	if err != nil {
+// 		return "", err
+// 	}
 
-	return strings.TrimSpace(input), nil
-}
+// 	return strings.TrimSpace(input), nil
+// }
 
-func runRussian(reader *bufio.Reader) {
-	fmt.Println("Выберите режим:")
-	fmt.Println("1 - Кодирование")
-	fmt.Println("2 - Декодирование")
+// func runRussian(reader *bufio.Reader) {
+// 	fmt.Println("Выберите режим:")
+// 	fmt.Println("1 - Кодирование")
+// 	fmt.Println("2 - Декодирование")
 
-	choice, err := prompt(reader, "Ваш выбор: ")
-	if err != nil {
-		fmt.Println("Ошибка ввода:", err)
-		os.Exit(1)
-	}
+// 	choice, err := prompt(reader, "Ваш выбор: ")
+// 	if err != nil {
+// 		fmt.Println("Ошибка ввода:", err)
+// 		os.Exit(1)
+// 	}
 
-	switch choice {
-	case "1":
-		fmt.Println(emojiChoices)
-		base, err := prompt(reader, "Введи один символ для кодирования (смайлик или буква): ")
-		if err != nil {
-			fmt.Println("Ошибка ввода:", err)
-			os.Exit(1)
-		}
+// 	switch choice {
+// 	case "1":
+// 		fmt.Println(emojiChoices)
+// 		base, err := prompt(reader, "Введи один символ для кодирования (смайлик или буква): ")
+// 		if err != nil {
+// 			fmt.Println("Ошибка ввода:", err)
+// 			os.Exit(1)
+// 		}
 
-		msg, err := prompt(reader, "Введи сообщение для кодирования: ")
-		if err != nil {
-			fmt.Println("Ошибка ввода:", err)
-			os.Exit(1)
-		}
+// 		msg, err := prompt(reader, "Введи сообщение для кодирования: ")
+// 		if err != nil {
+// 			fmt.Println("Ошибка ввода:", err)
+// 			os.Exit(1)
+// 		}
 
-		encoded, err := encode(base, msg)
-		if err != nil {
-			fmt.Println("Ошибка:", err)
-			os.Exit(1)
-		}
+// 		encoded, err := encode(base, msg)
+// 		if err != nil {
+// 			fmt.Println("Ошибка:", err)
+// 			os.Exit(1)
+// 		}
 
-		fmt.Println("Закодировано:", encoded)
-	case "2":
-		encodedInput, err := prompt(reader, "Введи зашифрованное сообщение (в нём может быть несколько блоков): ")
-		if err != nil {
-			fmt.Println("Ошибка ввода:", err)
-			os.Exit(1)
-		}
+// 		fmt.Println("Закодировано:", encoded)
+// 	case "2":
+// 		encodedInput, err := prompt(reader, "Введи зашифрованное сообщение (в нём может быть несколько блоков): ")
+// 		if err != nil {
+// 			fmt.Println("Ошибка ввода:", err)
+// 			os.Exit(1)
+// 		}
 
-		decoded := decode(encodedInput)
-		fmt.Print("Декодировано: ")
-		fmt.Println(strings.Join(decoded, " "))
-	default:
-		fmt.Println("Неверный выбор. Введите 1 или 2.")
-		os.Exit(1)
-	}
-}
+// 		decoded := decode(encodedInput)
+// 		fmt.Print("Декодировано: ")
+// 		fmt.Println(strings.Join(decoded, " "))
+// 	default:
+// 		fmt.Println("Неверный выбор. Введите 1 или 2.")
+// 		os.Exit(1)
+// 	}
+// }
 
-func runEnglish(reader *bufio.Reader) {
-	fmt.Println("Select mode:")
-	fmt.Println("1 - Encoding")
-	fmt.Println("2 - Decoding")
+// func runEnglish(reader *bufio.Reader) {
+// 	fmt.Println("Select mode:")
+// 	fmt.Println("1 - Encoding")
+// 	fmt.Println("2 - Decoding")
 
-	choice, err := prompt(reader, "Your choice: ")
-	if err != nil {
-		fmt.Println("Input error:", err)
-		os.Exit(1)
-	}
+// 	choice, err := prompt(reader, "Your choice: ")
+// 	if err != nil {
+// 		fmt.Println("Input error:", err)
+// 		os.Exit(1)
+// 	}
 
-	switch choice {
-	case "1":
-		fmt.Println(emojiChoices)
-		base, err := prompt(reader, "Enter a single symbol for encoding (emoji or letter): ")
-		if err != nil {
-			fmt.Println("Input error:", err)
-			os.Exit(1)
-		}
+// 	switch choice {
+// 	case "1":
+// 		fmt.Println(emojiChoices)
+// 		base, err := prompt(reader, "Enter a single symbol for encoding (emoji or letter): ")
+// 		if err != nil {
+// 			fmt.Println("Input error:", err)
+// 			os.Exit(1)
+// 		}
 
-		msg, err := prompt(reader, "Enter your message for encoding: ")
-		if err != nil {
-			fmt.Println("Input error:", err)
-			os.Exit(1)
-		}
+// 		msg, err := prompt(reader, "Enter your message for encoding: ")
+// 		if err != nil {
+// 			fmt.Println("Input error:", err)
+// 			os.Exit(1)
+// 		}
 
-		encoded, err := encode(base, msg)
-		if err != nil {
-			fmt.Println("Error:", err)
-			os.Exit(1)
-		}
+// 		encoded, err := encode(base, msg)
+// 		if err != nil {
+// 			fmt.Println("Error:", err)
+// 			os.Exit(1)
+// 		}
 
-		fmt.Println("Encoded:", encoded)
-	case "2":
-		encodedInput, err := prompt(reader, "Enter the encoded message (it may contain several blocks): ")
-		if err != nil {
-			fmt.Println("Input error:", err)
-			os.Exit(1)
-		}
+// 		fmt.Println("Encoded:", encoded)
+// 	case "2":
+// 		encodedInput, err := prompt(reader, "Enter the encoded message (it may contain several blocks): ")
+// 		if err != nil {
+// 			fmt.Println("Input error:", err)
+// 			os.Exit(1)
+// 		}
 
-		decoded := decode(encodedInput)
-		fmt.Print("Decoded: ")
-		fmt.Println(strings.Join(decoded, " "))
-	default:
-		fmt.Println("Invalid choice. Please enter 1 or 2.")
-		os.Exit(1)
-	}
-}
+// 		decoded := decode(encodedInput)
+// 		fmt.Print("Decoded: ")
+// 		fmt.Println(strings.Join(decoded, " "))
+// 	default:
+// 		fmt.Println("Invalid choice. Please enter 1 or 2.")
+// 		os.Exit(1)
+// 	}
+// }
 
 type pageData struct {
 	Input  string
